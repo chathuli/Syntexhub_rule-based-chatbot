@@ -6,15 +6,39 @@
 <title>Rule-Based Chatbot</title>
 <style>
   :root {
-    --bg: #0d1117;
-    --panel: #11161d;
-    --border: #232b34;
-    --text: #d6dee8;
-    --muted: #6b7a8d;
-    --accent: #4ac694;
-    --accent-dim: #2f7a5c;
-    --user-bubble: #1c2733;
-    --bot-bubble: #10231b;
+    --bg-page: #e9edf1;
+    --chat-bg: #f7f8fa;
+    --header-bg: #ffffff;
+    --header-text: #1a1a1a;
+    --header-sub: #6b7280;
+    --bot-bubble: #ffffff;
+    --bot-text: #1a1a1a;
+    --user-bubble: #4f9d69;
+    --user-text: #ffffff;
+    --intent-tag: #9aa3ab;
+    --input-bg: #ffffff;
+    --input-text: #1a1a1a;
+    --input-border: #d8dce1;
+    --divider: #dde1e6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  [data-theme="dark"] {
+    --bg-page: #0b141a;
+    --chat-bg: #0b141a;
+    --header-bg: #1f2c34;
+    --header-text: #e9edef;
+    --header-sub: #8696a0;
+    --bot-bubble: #1f2c34;
+    --bot-text: #e9edef;
+    --user-bubble: #005c4b;
+    --user-text: #e9edef;
+    --intent-tag: #6b7c85;
+    --input-bg: #1f2c34;
+    --input-text: #e9edef;
+    --input-border: #2a3942;
+    --divider: #222e35;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
 
   * { box-sizing: border-box; }
@@ -22,126 +46,229 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--bg);
-    font-family: 'Courier New', Consolas, monospace;
-    color: var(--text);
+    background: var(--bg-page);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
+    transition: background 0.3s ease;
   }
 
-  .terminal {
+  .app {
     width: 100%;
-    max-width: 640px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    max-width: 420px;
+    height: 640px;
+    background: var(--chat-bg);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
   }
 
-  .titlebar {
+  .header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: #161b22;
-    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--divider);
   }
 
-  .dot { width: 11px; height: 11px; border-radius: 50%; }
-  .dot.red { background: #ff5f56; }
-  .dot.yellow { background: #ffbd2e; }
-  .dot.green { background: #27c93f; }
-
-  .titlebar span {
-    margin-left: 8px;
-    color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 0.5px;
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #56ab7c, #2f7a5c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
   }
 
-  .log {
-    height: 420px;
+  .header-info { flex: 1; min-width: 0; }
+  .header-info .name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--header-text);
+  }
+  .header-info .status {
+    font-size: 12px;
+    color: var(--header-sub);
+  }
+
+  .theme-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    color: var(--header-text);
+    line-height: 1;
+  }
+  .theme-btn:hover { background: rgba(128,128,128,0.15); }
+
+  .messages {
+    flex: 1;
     overflow-y: auto;
-    padding: 16px;
-    font-size: 14px;
-    line-height: 1.6;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
-  .line { margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
-  .line .tag { color: var(--muted); }
-  .line.user .tag { color: #6fa8dc; }
-  .line.bot .tag { color: var(--accent); }
-  .line .intent { color: var(--muted); font-size: 11px; }
+  .row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 85%;
+    animation: pop 0.22s ease;
+  }
+  .row.user { align-self: flex-end; flex-direction: row-reverse; }
+  .row.bot { align-self: flex-start; }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .mini-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #56ab7c, #2f7a5c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+  }
+
+  .bubble {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    box-shadow: var(--shadow);
+    word-break: break-word;
+  }
+  .row.bot .bubble {
+    background: var(--bot-bubble);
+    color: var(--bot-text);
+    border-bottom-left-radius: 4px;
+  }
+  .row.user .bubble {
+    background: var(--user-bubble);
+    color: var(--user-text);
+    border-bottom-right-radius: 4px;
+  }
+
+  .intent {
+    display: block;
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--intent-tag);
+  }
+
+  .typing-row { align-self: flex-start; display: flex; align-items: center; gap: 8px; }
+  .typing-bubble {
+    background: var(--bot-bubble);
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 4px;
+  }
+  .typing-bubble span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--intent-tag);
+    animation: bounce 1.2s infinite;
+  }
+  .typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
 
   .inputbar {
     display: flex;
-    border-top: 1px solid var(--border);
-    padding: 10px 14px;
+    align-items: center;
     gap: 8px;
-    background: #10141a;
-  }
-
-  .inputbar .prompt {
-    color: var(--accent);
-    padding-top: 8px;
-    font-size: 14px;
+    padding: 10px 12px;
+    background: var(--header-bg);
+    border-top: 1px solid var(--divider);
   }
 
   .inputbar input {
     flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: inherit;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 20px;
+    padding: 10px 16px;
     font-size: 14px;
-    padding: 8px 4px;
+    color: var(--input-text);
+    outline: none;
+    transition: border-color 0.2s;
   }
+  .inputbar input:focus { border-color: #4f9d69; }
 
-  .inputbar button {
-    background: var(--accent-dim);
-    color: #ecfdf5;
+  .send-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #4f9d69;
     border: none;
-    border-radius: 5px;
-    padding: 8px 16px;
-    font-family: inherit;
-    font-size: 13px;
+    color: white;
+    font-size: 16px;
     cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s;
   }
+  .send-btn:hover { background: #438a5b; }
+  .send-btn:active { transform: scale(0.92); }
 
-  .inputbar button:hover { background: var(--accent); }
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 3px; }
 
   .hint {
     text-align: center;
-    color: var(--muted);
+    color: var(--header-sub);
     font-size: 12px;
-    padding: 8px 0 14px;
+    margin-top: 12px;
   }
-
-  .log::-webkit-scrollbar { width: 8px; }
-  .log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 </style>
 </head>
 <body>
 
-<div class="terminal">
-  <div class="titlebar">
-    <div class="dot red"></div>
-    <div class="dot yellow"></div>
-    <div class="dot green"></div>
-    <span>rule_based_chatbot.py</span>
+<div>
+  <div class="app">
+    <div class="header">
+      <div class="avatar">🤖</div>
+      <div class="header-info">
+        <div class="name">Rule-Based Bot</div>
+        <div class="status">Online • pattern matching engine</div>
+      </div>
+      <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="inputbar">
+      <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
+      <button class="send-btn" onclick="handleSend()" aria-label="Send">➤</button>
+    </div>
   </div>
-  <div class="log" id="log"></div>
-  <div class="inputbar">
-    <span class="prompt">&gt;</span>
-    <input type="text" id="userInput" placeholder="Type a message... (try 'help')" autocomplete="off">
-    <button onclick="handleSend()">Send</button>
-  </div>
+  <p class="hint">Type "bye" to end the conversation</p>
 </div>
-<p class="hint">Type "bye" to end • This bot uses rule-based pattern matching, no AI model involved</p>
 
 <script>
   const intents = {
@@ -198,14 +325,61 @@
     return { text: responses.fallback, intent: "fallback" };
   }
 
-  function appendLine(role, label, text, intent) {
-    const log = document.getElementById("log");
-    const div = document.createElement("div");
-    div.className = "line " + role;
-    const intentTag = intent ? ` <span class="intent">(${intent})</span>` : "";
-    div.innerHTML = `<span class="tag">${label}:</span> ${text}${intentTag}`;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+  const messagesEl = document.getElementById("messages");
+
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function appendMessage(role, text, intent) {
+    const row = document.createElement("div");
+    row.className = "row " + role;
+
+    if (role === "bot") {
+      const avatar = document.createElement("div");
+      avatar.className = "mini-avatar";
+      avatar.textContent = "🤖";
+      row.appendChild(avatar);
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    if (intent) {
+      const tag = document.createElement("span");
+      tag.className = "intent";
+      tag.textContent = intent;
+      bubble.appendChild(tag);
+    }
+
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  function showTyping() {
+    const row = document.createElement("div");
+    row.className = "row bot typing-row";
+    row.id = "typingRow";
+
+    const avatar = document.createElement("div");
+    avatar.className = "mini-avatar";
+    avatar.textContent = "🤖";
+
+    const bubble = document.createElement("div");
+    bubble.className = "typing-bubble";
+    bubble.innerHTML = "<span></span><span></span><span></span>";
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    const row = document.getElementById("typingRow");
+    if (row) row.remove();
   }
 
   function handleSend() {
@@ -213,19 +387,32 @@
     const value = inputEl.value.trim();
     if (!value) return;
 
-    appendLine("user", "You", value, null);
+    appendMessage("user", value, null);
     inputEl.value = "";
 
-    const { text, intent } = getResponse(value);
-    setTimeout(() => appendLine("bot", "Bot", text, intent), 200);
+    showTyping();
+    const delay = 500 + Math.random() * 400;
+
+    setTimeout(() => {
+      hideTyping();
+      const { text, intent } = getResponse(value);
+      appendMessage("bot", text, intent);
+    }, delay);
   }
 
   document.getElementById("userInput").addEventListener("keydown", function(e) {
     if (e.key === "Enter") handleSend();
   });
 
+  const themeToggle = document.getElementById("themeToggle");
+  themeToggle.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.documentElement.setAttribute("data-theme", isDark ? "light" : "dark");
+    themeToggle.textContent = isDark ? "🌙" : "☀️";
+  });
+
   window.onload = () => {
-    appendLine("bot", "Bot", "Hello! I'm a rule-based chatbot. Type 'help' to see what I can do, or 'bye' to exit.", null);
+    appendMessage("bot", "Hello! I'm a rule-based chatbot. Type 'help' to see what I can do, or 'bye' to exit.", null);
   };
 </script>
 

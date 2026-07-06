@@ -6,3 +6,5 @@
 [2026-07-06 11:03:24] Bot (fallback): Sorry, I didn't quite understand that. Type 'help' to see what I can do.
 [2026-07-06 11:03:32] You: help
 [2026-07-06 11:03:32] Bot (help): I can chat with you about greetings, small talk, and answer some domain questions (try asking 'what is python' or 'what is AI'). Type 'bye' to exit.
+[2026-07-06 11:20:10] You: bye
+[2026-07-06 11:20:10] Bot (goodbye): Goodbye! Have a great day!
