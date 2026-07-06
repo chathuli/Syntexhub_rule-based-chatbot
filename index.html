@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rule-Based Chatbot</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #11161d;
+    --border: #232b34;
+    --text: #d6dee8;
+    --muted: #6b7a8d;
+    --accent: #4ac694;
+    --accent-dim: #2f7a5c;
+    --user-bubble: #1c2733;
+    --bot-bubble: #10231b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Courier New', Consolas, monospace;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .terminal {
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .titlebar span {
+    margin-left: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  .log {
+    height: 420px;
+    overflow-y: auto;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .line { margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
+  .line .tag { color: var(--muted); }
+  .line.user .tag { color: #6fa8dc; }
+  .line.bot .tag { color: var(--accent); }
+  .line .intent { color: var(--muted); font-size: 11px; }
+
+  .inputbar {
+    display: flex;
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    gap: 8px;
+    background: #10141a;
+  }
+
+  .inputbar .prompt {
+    color: var(--accent);
+    padding-top: 8px;
+    font-size: 14px;
+  }
+
+  .inputbar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 4px;
+  }
+
+  .inputbar button {
+    background: var(--accent-dim);
+    color: #ecfdf5;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .inputbar button:hover { background: var(--accent); }
+
+  .hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 8px 0 14px;
+  }
+
+  .log::-webkit-scrollbar { width: 8px; }
+  .log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="terminal">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span>rule_based_chatbot.py</span>
+  </div>
+  <div class="log" id="log"></div>
+  <div class="inputbar">
+    <span class="prompt">&gt;</span>
+    <input type="text" id="userInput" placeholder="Type a message... (try 'help')" autocomplete="off">
+    <button onclick="handleSend()">Send</button>
+  </div>
+</div>
+<p class="hint">Type "bye" to end • This bot uses rule-based pattern matching, no AI model involved</p>
+
+<script>
+  const intents = {
+    greeting: ["hi", "hello", "hey", "good morning", "good evening"],
+    help: ["help", "what can you do", "options", "commands"],
+    smalltalk: ["how are you", "what's up", "how is it going"],
+    thanks: ["thank you", "thanks", "appreciate it"],
+    goodbye: ["bye", "goodbye", "exit", "quit", "see you"]
+  };
+
+  const responses = {
+    greeting: "Hello! How can I help you today?",
+    help: "I can chat about greetings and small talk, and answer domain questions (try 'what is python' or 'what is ai'). Type 'bye' to exit.",
+    smalltalk: "I'm just a program, but I'm running smoothly! How about you?",
+    thanks: "You're welcome!",
+    goodbye: "Goodbye! Have a great day!",
+    fallback: "Sorry, I didn't quite understand that. Type 'help' to see what I can do."
+  };
+
+  const knowledgeBase = {
+    "what is python": "Python is a high-level, easy-to-read programming language widely used in AI, web development, and automation.",
+    "what is ai": "AI (Artificial Intelligence) is the field of computer science focused on building systems that can perform tasks that normally require human intelligence.",
+    "what is machine learning": "Machine Learning is a subset of AI where systems learn patterns from data instead of being explicitly programmed.",
+    "what is a chatbot": "A chatbot is a program designed to simulate conversation with human users, often using pattern matching or machine learning.",
+    "what is github": "GitHub is a platform for hosting and collaborating on code using Git version control.",
+    "what is an algorithm": "An algorithm is a step-by-step set of instructions used to solve a problem or complete a task.",
+    "who created python": "Python was created by Guido van Rossum and first released in 1991.",
+    "what is a variable": "A variable is a named container used to store data values in a program."
+  };
+
+  function matchIntent(input) {
+    const lower = input.toLowerCase();
+    for (const [intent, keywords] of Object.entries(intents)) {
+      if (keywords.some(k => lower.includes(k))) return intent;
+    }
+    return null;
+  }
+
+  function searchKnowledgeBase(input) {
+    const lower = input.toLowerCase();
+    for (const [question, answer] of Object.entries(knowledgeBase)) {
+      if (lower.includes(question)) return answer;
+    }
+    return null;
+  }
+
+  function getResponse(input) {
+    const intent = matchIntent(input);
+    if (intent) return { text: responses[intent], intent };
+
+    const kbAnswer = searchKnowledgeBase(input);
+    if (kbAnswer) return { text: kbAnswer, intent: "knowledge_base" };
+
+    return { text: responses.fallback, intent: "fallback" };
+  }
+
+  function appendLine(role, label, text, intent) {
+    const log = document.getElementById("log");
+    const div = document.createElement("div");
+    div.className = "line " + role;
+    const intentTag = intent ? ` <span class="intent">(${intent})</span>` : "";
+    div.innerHTML = `<span class="tag">${label}:</span> ${text}${intentTag}`;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function handleSend() {
+    const inputEl = document.getElementById("userInput");
+    const value = inputEl.value.trim();
+    if (!value) return;
+
+    appendLine("user", "You", value, null);
+    inputEl.value = "";
+
+    const { text, intent } = getResponse(value);
+    setTimeout(() => appendLine("bot", "Bot", text, intent), 200);
+  }
+
+  document.getElementById("userInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") handleSend();
+  });
+
+  window.onload = () => {
+    appendLine("bot", "Bot", "Hello! I'm a rule-based chatbot. Type 'help' to see what I can do, or 'bye' to exit.", null);
+  };
+</script>
+
+</body>
+</html>

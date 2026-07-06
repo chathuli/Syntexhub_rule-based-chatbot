@@ -78,6 +78,11 @@ Bot: Goodbye! Have a great day!
 - Expand the knowledge base with more domain topics
 - Add typo tolerance (fuzzy matching)
 
+## 🌐 Web Frontend
+
+A browser-based version is also included (`index.html`). Just open it 
+directly in any browser — no server or installation required.
+
 ## 👤 Author
 
 Project completed as part of the SynTecXHub Internship — Week 2 Task (Project 1).
